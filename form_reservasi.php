@@ -1,4 +1,8 @@
-<?php include('db.php'); ?>
+<?php
+session_start();
+include('db.php');
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +13,30 @@
     <style>
         body {
             background-color: #f8f9fa;
+            display: flex;
+        }
+        .side-navbar {
+            min-width: 250px;
+            max-width: 250px;
+            background-color: #343a40;
+            color: #ffffff;
+            height: 100vh;
+            padding: 20px;
+        }
+        .side-navbar a {
+            color: #ffffff;
+            text-decoration: none;
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .side-navbar a:hover {
+            background-color: #007bff;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
         }
         .reservation-form {
             max-width: 600px;
@@ -34,7 +62,30 @@
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="side-navbar">
+    <h2>Hotel System</h2>
+    <a href="form_reservasi.php">Reservasi</a>
+    <a href="#" onclick="showReservations()">Cek Reservasi</a>
+    <?php if (isset($_SESSION['user_id'])): ?>
+    <a href="profile.php">Profile</a>
+    <a href="logout.php">Logout</a>
+<?php else: ?>
+    <a href="login.php">Login</a>
+    <a href="register.php">Register</a>
+<?php endif; ?>
+
+    <div id="reservations" style="display: none; margin-top: 20px;">
+        <h5>Rooms Booked</h5>
+        <?php
+        $stmt = $pdo->query("SELECT COUNT(*) AS booked_rooms FROM reservations");
+        $result = $stmt->fetch();
+        echo "<p>Booked Rooms: " . $result['booked_rooms'] . "</p>";
+        ?>
+    </div>
+</div>
+
+
+    <div class="content">
         <div class="reservation-form">
             <h1>Reservasi Kamar</h1>
             <form method="POST" action="process_reservation.php">
@@ -76,6 +127,12 @@
         </div>
     </div>
 
+    <script>
+        function showReservations() {
+            const reservationSection = document.getElementById('reservations');
+            reservationSection.style.display = reservationSection.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
