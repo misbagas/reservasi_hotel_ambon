@@ -1,29 +1,40 @@
-<?php include('db.php'); ?>
 <?php
+include('db.php');
+log_error("Form started loading");
+
+// Ensure to validate all user inputs before using them in queries
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
-    $room_id = $_POST['room_id'];
+    $name = htmlspecialchars($_POST['name']);
+    $email = htmlspecialchars($_POST['email']);
+    $phone = htmlspecialchars($_POST['phone']);
+    $room_id = (int)$_POST['room_id']; // Sanitize room_id
     $check_in = $_POST['check_in'];
     $check_out = $_POST['check_out'];
+
     try {
-        // Tambahkan data pelanggan
+        // Add customer data
         $stmt = $pdo->prepare("INSERT INTO customers (name, email, phone) VALUES (?, ?, ?)");
-        $stmt->execute([$name, $email, $phone]);
-        $customer_id = $pdo->lastInsertId();
-        
-        // Tambahkan data reservasi
+        if (!$stmt) {
+            echo "Failed to prepare the statement for customer data.";
+        } else {
+            $stmt->execute([$name, $email, $phone]);
+            $customer_id = $pdo->lastInsertId();
+        }
+
+        // Add reservation data
         $stmt = $pdo->prepare("INSERT INTO reservations (room_id, customer_id, check_in, check_out) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$room_id, $customer_id, $check_in, $check_out]);
-        
-        // Update ketersediaan kamar
-        $stmt = $pdo->prepare("UPDATE rooms SET availability = 0 WHERE id = ?");
-        $stmt->execute([$room_id]);
-        
-        echo "<div class='alert alert-success' role='alert'>Reservasi berhasil!</div>";
+        if (!$stmt) {
+            echo "Failed to prepare the statement for reservation data.";
+        } else {
+            $stmt->execute([$room_id, $customer_id, $check_in, $check_out]);
+            $reservation_id = $pdo->lastInsertId();
+        }
+
+        // Redirect to review form with reservation ID
+        header("Location: review_form.php?reservation_id=" . $reservation_id);
+        exit();
     } catch (Exception $e) {
-        echo "<div class='alert alert-danger' role='alert'>Gagal melakukan reservasi: " . $e->getMessage() . "</div>";
+        echo "<div class='alert alert-danger' role='alert'>Failed to make reservation: " . $e->getMessage() . "</div>";
     }
 }
 ?>
